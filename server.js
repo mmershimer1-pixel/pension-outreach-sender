@@ -103,12 +103,24 @@ app.get("/auth/start", (req, res) => {
 });
 
 app.get("/auth/callback", async (req, res) => {
-  const { code } = req.query;
-  const { tokens: newTokens } = await oauth2Client.getToken(code);
-  tokens = newTokens;
-  res.send("Google connected successfully. You can close this tab.");
-});
+  try {
+    const { code } = req.query;
 
+    if (!code) {
+      return res.status(400).send("Missing authorization code.");
+    }
+
+    const { tokens: newTokens } = await oauth2Client.getToken(code);
+    tokens = newTokens;
+
+    console.log("OAuth success. Tokens stored.");
+
+    res.send("Google connected successfully. You can close this tab.");
+  } catch (error) {
+    console.error("OAuth callback error:", error);
+    res.status(500).send("OAuth error: " + error.message);
+  }
+});
 async function readSheet(spreadsheetId, range) {
   const sheets = google.sheets({ version: "v4", auth: oauth2Client });
 
